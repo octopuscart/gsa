@@ -70,6 +70,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 enlargeCenterPage: false,
                 onPageChanged: (int index, pagereason) {
                   print(storyline[index]);
+                  //Downloading images
                 }
                 // autoPlay: false,
                 ),
