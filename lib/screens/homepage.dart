@@ -3,6 +3,9 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:gsa/modal/dbsync.dart';
 import 'package:gsa/modal/curd.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key, required this.title}) : super(key: key);
@@ -21,9 +24,10 @@ class _MyHomePageState extends State<MyHomePage> {
   int steps = 0;
   List storyline = [];
   CarouselController buttonCarouselController = CarouselController();
-
+  late Dio dio;
   @override
   void initState() {
+    dio = Dio();
     print("init homepage");
     getSyncLocalData();
     super.initState();
@@ -42,6 +46,62 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       loadingString = message;
     });
+  }
+
+  bool loadingdata = true;
+
+  var progress = "";
+  String savePath = "";
+
+  bool downloading = true;
+  String downloadingStr = "No data";
+  var temp = '';
+
+  Future downloadFile(image_detail) async {
+    print("download function");
+
+    try {
+      Dio dio = Dio();
+      String fileName = image_detail['image']
+          .substring(image_detail['image'].lastIndexOf("/") + 1);
+      Directory tempDir = await getApplicationDocumentsDirectory();
+      String savePath = '${tempDir.path}/$fileName';
+
+      await dio.download(image_detail['image'], savePath,
+          onReceiveProgress: (rec, total) {
+        setState(() {
+          downloading = true;
+          // download = (rec / total) * 100;
+          downloadingStr = "Downloading URL : $rec";
+          temp = savePath;
+        });
+      });
+      print(temp);
+      // dbObj.insertDataFavourite(
+      //     song_id: song_detail['song_id'],
+      //     song_title: song_detail['title'],
+      //     song_path: temp,
+      //     user_id: song_detail['id']);
+      setState(() {
+        downloading = false;
+        downloadingStr = "Completed";
+      });
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+
+  checkData(commingData) {
+    print("vvvvvvvvvvvvvvvvv");
+    print(commingData);
+    // print(commingData['local_path']);
+    var res = commingData['local_path'].toString();
+    if (res != '') {
+      print("iffffff");
+    } else {
+      print("else");
+      downloadFile(commingData);
+    }
   }
 
   @override
@@ -70,6 +130,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 enlargeCenterPage: false,
                 onPageChanged: (int index, pagereason) {
                   print(storyline[index]);
+                  //Downloading images
+                  checkData(storyline[index]);
                 }
                 // autoPlay: false,
                 ),
